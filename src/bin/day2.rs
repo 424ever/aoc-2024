@@ -1,13 +1,12 @@
+use aoc_2024::read_input;
 use itertools::Itertools;
-use std::{env, fs::read_to_string};
 
 struct Report {
     levels: Vec<i32>,
 }
 
 fn main() {
-    let filename = env::args().nth(1).unwrap();
-    let input = read_to_string(filename).unwrap();
+    let input = read_input(2);
     let reports: Vec<_> = input.lines().map(Report::from_input).collect();
 
     println!("Part 1: {}", reports.iter().filter(|r| r.safe()).count());

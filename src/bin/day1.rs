@@ -1,8 +1,7 @@
-use std::{env, fs::read_to_string};
+use aoc_2024::read_input;
 
 fn main() {
-    let filename = env::args().nth(1).unwrap();
-    let input = read_to_string(filename).unwrap();
+    let input = read_input(1);
 
     let list1: Vec<_> = input
         .lines()

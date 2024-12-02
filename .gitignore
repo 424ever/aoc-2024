@@ -1,1 +1,6 @@
-inputs
+inputs/day*
+
+
+# Added by cargo
+
+/target
