@@ -1,6 +1,11 @@
+use aoc_2024::iters::Differences;
 use aoc_2024::read_input;
-use itertools::Itertools;
 
+trait SafeDiffs: Iterator {
+    fn safe_diffs(self) -> bool;
+}
+
+#[derive(Debug)]
 struct Report {
     levels: Vec<i32>,
 }
@@ -26,7 +31,7 @@ impl Report {
     }
 
     pub fn safe(&self) -> bool {
-        Self::safe_diffs(&Self::to_diffs(&self.levels))
+        self.levels.clone().into_iter().differences().safe_diffs()
     }
 
     pub fn actually_safe(&self) -> bool {
@@ -34,23 +39,21 @@ impl Report {
             .filter(|&i| {
                 let mut c = self.levels.clone();
                 c.remove(i);
-                Self::safe_diffs(&Self::to_diffs(&c))
+                c.into_iter().differences().safe_diffs()
             })
             .count()
             > 0
     }
+}
 
-    fn to_diffs(levels: &Vec<i32>) -> Vec<i32> {
-        levels
-            .into_iter()
-            .tuple_windows()
-            .map(|w: (&i32, &i32)| w.0 - w.1)
-            .collect()
-    }
-
-    fn safe_diffs(diffs: &Vec<i32>) -> bool {
-        (diffs.iter().all(|&n| n > 0) || diffs.iter().all(|&n| n < 0))
-            && diffs.iter().all(|n| n.abs() >= 1 && n.abs() <= 3)
+impl<T> SafeDiffs for T
+where
+    T: Iterator<Item = i32>,
+{
+    fn safe_diffs(self) -> bool {
+        let t: Vec<_> = self.collect();
+        (t.iter().all(|&n| n > 0) || t.iter().all(|&n| n < 0))
+            && t.iter().all(|n| n.abs() >= 1 && n.abs() <= 3)
     }
 }
 
@@ -75,6 +78,7 @@ mod tests {
                 .lines()
                 .map(Report::from_input)
                 .filter(|r| r.safe())
+                .inspect(|r| println!("safe: {:?}", r))
                 .count()
         );
     }
