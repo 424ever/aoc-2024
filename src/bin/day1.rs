@@ -1,7 +1,7 @@
 use aoc_2024::read_input;
 
 fn main() {
-    let input = read_input(1);
+    let input = read_input("day1");
 
     let list1: Vec<_> = input
         .lines()

@@ -11,7 +11,7 @@ struct Report {
 }
 
 fn main() {
-    let input = read_input(2);
+    let input = read_input("day2");
     let reports: Vec<_> = input.lines().map(Report::from_input).collect();
 
     println!("Part 1: {}", reports.iter().filter(|r| r.safe()).count());
