@@ -1,4 +1,4 @@
-use aoc_2024::iters::Differences;
+use aoc_2024::iters::IteratorExtensions;
 use aoc_2024::read_input;
 
 trait SafeDiffs: Iterator {
@@ -16,7 +16,7 @@ fn main() {
 
     println!("Part 1: {}", reports.iter().filter(|r| r.safe()).count());
     println!(
-        "Part 1: {}",
+        "Part 2: {}",
         reports.iter().filter(|r| r.actually_safe()).count()
     );
 }
