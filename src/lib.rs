@@ -1,5 +1,6 @@
 use std::fs;
 
+pub mod containers;
 pub mod iters;
 
 pub fn read_input(name: &str) -> String {
