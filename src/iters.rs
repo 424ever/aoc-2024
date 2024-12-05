@@ -9,9 +9,20 @@ pub trait IteratorExtensions: Iterator {
     fn pairs(self) -> Pairs<Self, Self::Item>
     where
         Self: Sized;
+
     fn differences(self) -> impl Iterator<Item = <Self::Item as Sub>::Output>
     where
         Self::Item: Sub;
+
+    fn find_index<P>(&mut self, predicate: P) -> Option<usize>
+    where
+        P: Fn(&Self::Item) -> bool;
+
+    fn with_known_size(self) -> impl Iterator<Item = Self::Item> + ExactSizeIterator;
+
+    fn middle_element(self) -> Option<Self::Item>
+    where
+        Self: ExactSizeIterator;
 }
 
 impl<T> IteratorExtensions for T
@@ -31,6 +42,29 @@ where
         Self::Item: Sub + Clone,
     {
         self.pairs().map(|t: (Self::Item, Self::Item)| t.1.sub(t.0))
+    }
+
+    fn find_index<P>(&mut self, predicate: P) -> Option<usize>
+    where
+        P: Fn(&Self::Item) -> bool,
+    {
+        Some(self.enumerate().find(|(_, e)| predicate(e))?.0)
+    }
+
+    fn middle_element(self) -> Option<Self::Item>
+    where
+        Self: ExactSizeIterator,
+    {
+        if self.len() % 2 == 0 {
+            None
+        } else {
+            let s = self.len() / 2;
+            self.skip(s).next()
+        }
+    }
+
+    fn with_known_size(self) -> impl Iterator<Item = Self::Item> + ExactSizeIterator {
+        self.collect::<Vec<_>>().into_iter()
     }
 }
 
@@ -66,6 +100,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::iter::repeat;
+
     use crate::iters::IteratorExtensions;
 
     #[test]
@@ -89,5 +125,29 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![2, -1, 2]
         );
+    }
+
+    #[test]
+    fn test_find_index() {
+        assert_eq!("abcd".chars().find_index(|c| c.is_uppercase()), None);
+        assert_eq!("abCd".chars().find_index(|c| c.is_uppercase()), Some(2));
+    }
+
+    #[test]
+    fn test_with_known_size() {
+        assert_eq!("abcd".chars().with_known_size().len(), 4);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_with_known_size_infinite() {
+        repeat(()).with_known_size().for_each(|_| {});
+    }
+
+    #[test]
+    fn test_middle_element() {
+        assert_eq!("".chars().with_known_size().middle_element(), None);
+        assert_eq!("ab".chars().with_known_size().middle_element(), None);
+        assert_eq!("abc".chars().with_known_size().middle_element(), Some('b'));
     }
 }
