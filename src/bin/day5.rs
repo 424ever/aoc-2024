@@ -1,4 +1,7 @@
-use std::borrow::Cow;
+use std::{
+    cmp::Ordering,
+    collections::{HashMap, HashSet},
+};
 
 use aoc_2024::{iters::IteratorExtensions, read_input};
 use nom::{
@@ -8,17 +11,10 @@ use nom::{
     IResult,
 };
 
-#[derive(Debug, Clone, PartialEq)]
-struct Update {
-    pages: Vec<u32>,
-}
+type Update = Vec<u32>;
 
-/// A rule specifying that [`Self::first`] must come before [`Self::second`]
-/// in an [`Update`].
-#[derive(Debug, Clone)]
-struct PageOrderingRule {
-    first: u32,
-    second: u32,
+struct PageOrderingRules {
+    rules: HashMap<u32, HashSet<u32>>,
 }
 
 fn main() {
@@ -28,62 +24,55 @@ fn main() {
     println!("Part 2: {}", add_up_corrected(&updates, &rules));
 }
 
-fn add_up_correctly_odered(updates: &Vec<Update>, rules: &Vec<PageOrderingRule>) -> u32 {
+fn add_up_correctly_odered(updates: &Vec<Update>, rules: &PageOrderingRules) -> u32 {
     updates
         .iter()
-        .filter(|u| rules.iter().all(|r| rule_applies(&r, u)))
-        .map(|u| u.pages.iter().middle_element().unwrap())
+        .filter(|u| ordered_by_rules(*u, rules))
+        .map(|u| u.iter().middle_element().unwrap())
         .sum()
 }
 
-fn add_up_corrected(updates: &Vec<Update>, rules: &Vec<PageOrderingRule>) -> u32 {
+fn add_up_corrected(updates: &Vec<Update>, rules: &PageOrderingRules) -> u32 {
     updates
         .iter()
-        .filter_map(|u| correct_with_rules(&rules, u))
-        .map(|u| {
-            let x = u.pages.iter().middle_element().unwrap();
-            x.clone()
-        })
+        .filter(|u| !ordered_by_rules(u, rules))
+        .map(|u| correct_with_rules(u, rules))
+        .map(|u| u.iter().middle_element().unwrap().clone())
         .sum()
 }
 
-fn rule_applies(rule: &PageOrderingRule, update: &Update) -> bool {
-    let first_idx = update.pages.iter().find_index(|p| **p == rule.first);
-    let second_idx = update.pages.iter().find_index(|p| **p == rule.second);
-
-    match (first_idx, second_idx) {
-        (None, None) => true,
-        (None, Some(_)) => true,
-        (Some(_), None) => true,
-        (Some(i1), Some(i2)) => i1 < i2,
-    }
+fn ordered_by_rules(update: &Update, rules: &PageOrderingRules) -> bool {
+    update
+        .iter()
+        .enumerate()
+        .is_sorted_by(|a, b| compare_with_rules(a, b, rules) == Ordering::Less)
 }
 
-fn correct_with_rules<'a>(rules: &Vec<PageOrderingRule>, update: &Update) -> Option<Update> {
-    let mut changed = Cow::Borrowed(update);
-    loop {
-        let mut any_applied = false;
-        for rule in rules {
-            if !rule_applies(rule, changed.as_ref()) {
-                any_applied = true;
-                let first_idx = changed.pages.iter().find_index(|p| **p == rule.first);
-                let second_idx = changed.pages.iter().find_index(|p| **p == rule.second);
+fn correct_with_rules(update: &Update, rules: &PageOrderingRules) -> Update {
+    let mut update = update.iter().enumerate().collect::<Vec<_>>();
 
-                changed
-                    .to_mut()
-                    .pages
-                    .swap(first_idx.unwrap(), second_idx.unwrap());
-            }
-        }
-        if !any_applied {
-            break;
+    update.sort_by(|a, b| compare_with_rules(a, b, rules));
+
+    update.iter().map(|t| *t.1).collect()
+}
+
+fn compare_with_rules(a: &(usize, &u32), b: &(usize, &u32), rules: &PageOrderingRules) -> Ordering {
+    let (a_idx, a) = *a;
+    let (b_idx, b) = *b;
+
+    if let Some(after_a) = rules.rules.get(a) {
+        if after_a.contains(b) {
+            return Ordering::Less;
         }
     }
 
-    match changed {
-        Cow::Borrowed(_) => None,
-        Cow::Owned(u) => Some(u),
+    if let Some(after_b) = rules.rules.get(b) {
+        if after_b.contains(a) {
+            return Ordering::Greater;
+        }
     }
+
+    return a_idx.cmp(&b_idx);
 }
 
 fn parse_updates(input: &str) -> IResult<&str, Vec<Update>> {
@@ -94,45 +83,50 @@ fn parse_updates(input: &str) -> IResult<&str, Vec<Update>> {
         ),
         Vec::new,
         |mut acc, pages| {
-            acc.push(Update { pages });
+            acc.push(pages);
             acc
         },
     )(input)
 }
 
-fn parse_page_ordering_rules(input: &str) -> IResult<&str, Vec<PageOrderingRule>> {
+fn parse_page_ordering_rules(input: &str) -> IResult<&str, PageOrderingRules> {
     fold_many1(
         terminated(
             separated_pair(complete::u32, streaming::char('|'), complete::u32),
             complete::newline,
         ),
-        Vec::new,
+        PageOrderingRules::new,
         |mut acc, (first, second)| {
-            acc.push(PageOrderingRule::new(first, second));
+            acc.add_rule(first, second);
             acc
         },
     )(input)
 }
 
-fn parse_input(input: &str) -> IResult<&str, (Vec<PageOrderingRule>, Vec<Update>)> {
+fn parse_input(input: &str) -> IResult<&str, (PageOrderingRules, Vec<Update>)> {
     separated_pair(parse_page_ordering_rules, complete::newline, parse_updates)(input)
 }
 
-impl PageOrderingRule {
-    pub fn new(first: u32, second: u32) -> Self {
-        if first == second {
-            panic!("first and second cannot be the same");
-        } else {
-            Self { first, second }
+impl PageOrderingRules {
+    pub fn new() -> Self {
+        Self {
+            rules: HashMap::new(),
         }
+    }
+
+    pub fn add_rule(&mut self, first: u32, second: u32) {
+        self.rules
+            .entry(first)
+            .and_modify(|m| {
+                m.insert(second);
+            })
+            .or_insert(HashSet::from_iter([second]));
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        add_up_corrected, add_up_correctly_odered, correct_with_rules, parse_input, Update,
-    };
+    use crate::{add_up_corrected, add_up_correctly_odered, correct_with_rules, parse_input};
 
     const INPUT: &str = concat!(
         "47|53\n",
@@ -187,10 +181,7 @@ mod tests {
         ];
 
         for t in tests {
-            assert_eq!(
-                correct_with_rules(&rules, &Update { pages: t.0 }),
-                Some(Update { pages: t.1 })
-            );
+            assert_eq!(correct_with_rules(&t.0, &rules), t.1);
         }
     }
 }
