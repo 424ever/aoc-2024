@@ -19,8 +19,8 @@ enum Operator {
 
 #[derive(Debug)]
 struct Calibration {
-    target: u128,
-    values: Vec<u128>,
+    target: u64,
+    values: Vec<u64>,
 }
 
 fn main() {
@@ -30,7 +30,7 @@ fn main() {
     println!("Part 2: {}", total_calibration_result(&cals, true));
 }
 
-fn total_calibration_result(cals: &Vec<Calibration>, concat: bool) -> u128 {
+fn total_calibration_result(cals: &Vec<Calibration>, concat: bool) -> u64 {
     let mut available_operators = HashSet::new();
     available_operators.insert(Operator::Add);
     available_operators.insert(Operator::Multiply);
@@ -46,9 +46,9 @@ fn total_calibration_result(cals: &Vec<Calibration>, concat: bool) -> u128 {
 
 fn parse_calibration(input: &str) -> IResult<&str, Calibration> {
     separated_pair(
-        character::complete::u128,
+        character::complete::u64,
         tag(": "),
-        separated_list1(complete::space1, complete::u128),
+        separated_list1(complete::space1, complete::u64),
     )(input)
     .map(|(s, (target, values))| (s, Calibration { target, values }))
 }
@@ -58,7 +58,7 @@ fn parse_input(input: &str) -> IResult<&str, Vec<Calibration>> {
 }
 
 impl Operator {
-    fn apply(&self, a: u128, b: u128) -> u128 {
+    fn apply(&self, a: u64, b: u64) -> u64 {
         match self {
             Operator::Add => a + b,
             Operator::Multiply => a * b,
