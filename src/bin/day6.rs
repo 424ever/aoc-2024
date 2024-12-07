@@ -14,10 +14,6 @@ fn main() {
     let init = init.unwrap();
     let path = travel(&init, &obstacles);
 
-    assert!(!path.1, "part 1 looped");
-
-    let path = states_to_positions(&path.0);
-
     println!("Part 1: {}", path.len());
     println!(
         "Part 2: {}",
@@ -27,13 +23,13 @@ fn main() {
 
 fn count_obstacles_causing_loop(init: &BoundedCoord2D, obstacles: &Obstacles) -> usize {
     let mut newobstacles = obstacles.clone();
-    states_to_positions(&travel(init, obstacles).0)
+    travel(init, obstacles)
         .iter()
         .filter(|c| **c != init.unbounded())
         .filter(|c| !obstacles.contains(*c))
         .filter(|c| {
             newobstacles.insert(**c);
-            let res = travel(init, &newobstacles).1;
+            let res = travel_loops(init, &newobstacles);
             newobstacles.remove(*c);
             res
         })
@@ -44,7 +40,7 @@ fn states_to_positions(states: &HashSet<(Coord2D, Direction2D)>) -> HashSet<Coor
     states.iter().map(|(c, _)| *c).collect()
 }
 
-fn travel(init: &BoundedCoord2D, obstacles: &Obstacles) -> (HashSet<(Coord2D, Direction2D)>, bool) {
+fn travel(init: &BoundedCoord2D, obstacles: &Obstacles) -> HashSet<Coord2D> {
     let mut visited: HashSet<(Coord2D, Direction2D)> = HashSet::new();
     let mut cur_pos = init.clone();
     let mut cur_dir = Direction2D::Up;
@@ -57,7 +53,7 @@ fn travel(init: &BoundedCoord2D, obstacles: &Obstacles) -> (HashSet<(Coord2D, Di
             } else {
                 cur_pos = new_pos;
                 if !visited.insert((cur_pos.unbounded(), cur_dir)) {
-                    return (visited, true);
+                    panic!("travel() looped");
                 }
             }
         } else {
@@ -65,7 +61,33 @@ fn travel(init: &BoundedCoord2D, obstacles: &Obstacles) -> (HashSet<(Coord2D, Di
         }
     }
 
-    (visited, false)
+    states_to_positions(&visited)
+}
+
+fn travel_loops(init: &BoundedCoord2D, obstacles: &Obstacles) -> bool {
+    let mut cur_pos = init.clone();
+    let mut cur_dir = Direction2D::Up;
+    let mut turns = Vec::new();
+
+    loop {
+        if let Some(new_pos) = cur_pos.go_in(&cur_dir) {
+            if obstacles.contains(&new_pos.unbounded()) {
+                cur_dir = cur_dir.turn_right();
+                if turns.contains(&(cur_pos, cur_dir)) {
+                    return true;
+                }
+                turns.push((cur_pos, cur_dir));
+            } else {
+                cur_pos = new_pos;
+            }
+            if cur_pos == *init && cur_dir == Direction2D::Up {
+                return true;
+            }
+        } else {
+            break;
+        }
+    }
+    false
 }
 
 fn parse_input(input: &str) -> IResult<&str, (Obstacles, Option<BoundedCoord2D>)> {
@@ -105,7 +127,9 @@ fn parse_input(input: &str) -> IResult<&str, (Obstacles, Option<BoundedCoord2D>)
 
 #[cfg(test)]
 mod tests {
-    use crate::{count_obstacles_causing_loop, parse_input, states_to_positions, travel};
+    use aoc_2024::coord::Coord2D;
+
+    use crate::{count_obstacles_causing_loop, parse_input, travel, travel_loops};
 
     const INPUT: &str = "....#.....
 .........#
@@ -122,8 +146,14 @@ mod tests {
     #[test]
     fn test_part_1() {
         let (_, (obstacles, init)) = parse_input(INPUT).unwrap();
-        let p = travel(&init.unwrap(), &obstacles);
-        assert_eq!(states_to_positions(&p.0).len(), 41);
+        assert_eq!(travel(&init.unwrap(), &obstacles).len(), 41);
+    }
+
+    #[test]
+    fn test_loop() {
+        let (_, (mut obstacles, init)) = parse_input(INPUT).unwrap();
+        obstacles.insert(Coord2D::new(3, 6));
+        assert!(travel_loops(&init.unwrap(), &obstacles));
     }
 
     #[test]
