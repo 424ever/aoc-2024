@@ -13,12 +13,21 @@ fn main() {
     let input = read_input("day8");
     let antennas = parse_input(&input);
     println!("Part 1: {}", antinodes(&antennas).len());
+    println!("Part 2: {}", antinodes_with_resonance(&antennas).len());
 }
 
 fn antinodes(antennas: &HashMap<Frequency, Antennas>) -> HashSet<Coord2D> {
     antennas
         .iter()
         .map(|(_, ant)| antinodes_of(ant))
+        .flatten()
+        .collect()
+}
+
+fn antinodes_with_resonance(antennas: &HashMap<Frequency, Antennas>) -> HashSet<Coord2D> {
+    antennas
+        .iter()
+        .map(|(_, ant)| antinodes_with_resonance_of(ant))
         .flatten()
         .collect()
 }
@@ -52,6 +61,15 @@ fn antinodes_of(antennas: &Antennas) -> HashSet<Coord2D> {
     iproduct!(antennas.iter(), antennas.iter())
         .filter(|(a, b)| a != b)
         .filter_map(|(&a, &b)| a + ((b - a) * 2))
+        .map(|b| b.unbounded())
+        .collect()
+}
+
+fn antinodes_with_resonance_of(antennas: &Antennas) -> HashSet<Coord2D> {
+    iproduct!(antennas.iter(), antennas.iter())
+        .filter(|(a, b)| a != b)
+        .map(|(&a, &b)| (1..).map_while(move |n| a + ((b - a) * n)))
+        .flatten()
         .map(|b| b.unbounded())
         .collect()
 }
@@ -97,7 +115,7 @@ mod tests {
 
     use aoc_2024::coord::{BoundedCoord2D, Bounds2D, Coord2D};
 
-    use crate::{antinodes, parse_input};
+    use crate::{antinodes, antinodes_with_resonance, parse_input};
 
     const INPUT: &str = concat!(
         "............\n",
@@ -135,5 +153,12 @@ mod tests {
         let antennas = parse_input(INPUT);
         dbg!(antinodes(&antennas));
         assert_eq!(antinodes(&antennas).len(), 14);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let antennas = parse_input(INPUT);
+        dbg!(antinodes(&antennas));
+        assert_eq!(antinodes_with_resonance(&antennas).len(), 34);
     }
 }
