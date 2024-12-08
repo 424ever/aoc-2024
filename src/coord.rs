@@ -1,3 +1,5 @@
+use std::ops::{Add, Mul, Sub};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Direction2D {
     Up,
@@ -16,6 +18,12 @@ pub struct Bounds2D {
 pub struct Coord2D {
     x: u32,
     y: u32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CoordDiff2D {
+    dx: i32,
+    dy: i32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -59,6 +67,10 @@ impl Bounds2D {
     pub fn expand_height(&mut self, height: u32) {
         self.height = self.height.max(height);
     }
+
+    pub fn is_valid(&self, coord: &Coord2D) -> bool {
+        coord.x < self.width && coord.y < self.height
+    }
 }
 
 impl Coord2D {
@@ -70,24 +82,57 @@ impl Coord2D {
         BoundedCoord2D::new(self, bounds)
     }
 
-    pub fn go_in(&self, dir: &Direction2D) -> Coord2D {
-        match dir {
+    pub fn go_in(&self, dir: &Direction2D) -> Option<Coord2D> {
+        Some(match dir {
             Direction2D::Up => Self {
                 x: self.x,
-                y: self.y - 1,
+                y: self.y.checked_sub(1)?,
             },
             Direction2D::Down => Self {
                 x: self.x,
                 y: self.y + 1,
             },
             Direction2D::Left => Self {
-                x: self.x - 1,
+                x: self.x.checked_sub(1)?,
                 y: self.y,
             },
             Direction2D::Right => Self {
                 x: self.x + 1,
                 y: self.y,
             },
+        })
+    }
+}
+
+impl Add<CoordDiff2D> for Coord2D {
+    type Output = Option<Self>;
+
+    fn add(self, rhs: CoordDiff2D) -> Self::Output {
+        Some(Self::new(
+            self.x.checked_add_signed(rhs.dx)?,
+            self.y.checked_add_signed(rhs.dy)?,
+        ))
+    }
+}
+
+impl Sub for Coord2D {
+    type Output = CoordDiff2D;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        CoordDiff2D {
+            dx: i32::try_from(self.x).unwrap() - i32::try_from(rhs.x).unwrap(),
+            dy: i32::try_from(self.y).unwrap() - i32::try_from(rhs.y).unwrap(),
+        }
+    }
+}
+
+impl Mul<i32> for CoordDiff2D {
+    type Output = Self;
+
+    fn mul(self, rhs: i32) -> Self::Output {
+        Self {
+            dx: self.dx * rhs,
+            dy: self.dy * rhs,
         }
     }
 }
@@ -108,23 +153,32 @@ impl BoundedCoord2D {
         self.bounds
     }
 
-    pub fn can_go_in(&self, dir: &Direction2D) -> bool {
-        match dir {
-            Direction2D::Up => self.coord.y > 0,
-            Direction2D::Down => self.coord.y < self.bounds.height - 1,
-            Direction2D::Left => self.coord.x > 0,
-            Direction2D::Right => self.coord.x < self.bounds.width - 1,
-        }
+    pub fn go_in(&self, dir: &Direction2D) -> Option<BoundedCoord2D> {
+        let new = self.coord.go_in(dir)?;
+        Self::if_valid(self.bounds(), new)
     }
 
-    pub fn go_in(&self, dir: &Direction2D) -> Option<BoundedCoord2D> {
-        if !self.can_go_in(dir) {
-            None
+    fn if_valid(bounds: Bounds2D, coord: Coord2D) -> Option<BoundedCoord2D> {
+        if bounds.is_valid(&coord) {
+            Some(Self::new(coord, bounds))
         } else {
-            Some(Self {
-                coord: self.coord.go_in(dir),
-                bounds: self.bounds,
-            })
+            None
         }
+    }
+}
+
+impl Add<CoordDiff2D> for BoundedCoord2D {
+    type Output = Option<Self>;
+
+    fn add(self, rhs: CoordDiff2D) -> Self::Output {
+        Self::if_valid(self.bounds(), (self.coord + rhs)?)
+    }
+}
+
+impl Sub for BoundedCoord2D {
+    type Output = CoordDiff2D;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        self.coord - rhs.coord
     }
 }
