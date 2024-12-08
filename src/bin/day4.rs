@@ -31,16 +31,14 @@ fn count_cross_mas(input: &Vec2D<char>) -> u32 {
 }
 
 fn count_xmas_starting_at(input: &Vec2D<char>, l: usize, c: usize) -> u32 {
-    let offsets = vec![
-        (0, 1),   /* forwards */
+    let offsets = [(0, 1),   /* forwards */
         (0, -1),  /* backwards */
         (1, 0),   /* down */
         (-1, 0),  /* up */
         (1, 1),   /* down-right */
         (1, -1),  /* down-left */
         (-1, 1),  /* up-right */
-        (-1, -1), /* up-left */
-    ];
+        (-1, -1)];
     offsets
         .iter()
         .filter(|(lo, co)| word_with_offsets(input, "XMAS", l, c, *lo, *co).is_some())
@@ -102,7 +100,7 @@ fn word_with_offsets(
             return None;
         }
     }
-    return Some(());
+    Some(())
 }
 
 #[cfg(test)]

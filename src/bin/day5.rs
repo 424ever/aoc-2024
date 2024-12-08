@@ -27,7 +27,7 @@ fn main() {
 fn add_up_correctly_odered(updates: &Vec<Update>, rules: &PageOrderingRules) -> u32 {
     updates
         .iter()
-        .filter(|u| ordered_by_rules(*u, rules))
+        .filter(|u| ordered_by_rules(u, rules))
         .map(|u| u.iter().middle_element().unwrap())
         .sum()
 }
@@ -37,7 +37,7 @@ fn add_up_corrected(updates: &Vec<Update>, rules: &PageOrderingRules) -> u32 {
         .iter()
         .filter(|u| !ordered_by_rules(u, rules))
         .map(|u| correct_with_rules(u, rules))
-        .map(|u| u.iter().middle_element().unwrap().clone())
+        .map(|u| *u.iter().middle_element().unwrap())
         .sum()
 }
 
@@ -72,7 +72,7 @@ fn compare_with_rules(a: &(usize, &u32), b: &(usize, &u32), rules: &PageOrdering
         }
     }
 
-    return a_idx.cmp(&b_idx);
+    a_idx.cmp(&b_idx)
 }
 
 fn parse_updates(input: &str) -> IResult<&str, Vec<Update>> {

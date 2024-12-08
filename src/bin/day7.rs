@@ -159,7 +159,7 @@ mod tests {
             target: 190,
             values: vec![10, 19],
         };
-        assert_eq!(cal.is_true_with(&vec![&Operator::Add]), false);
-        assert_eq!(cal.is_true_with(&vec![&Operator::Multiply]), true);
+        assert!(!cal.is_true_with(&vec![&Operator::Add]));
+        assert!(cal.is_true_with(&vec![&Operator::Multiply]));
     }
 }

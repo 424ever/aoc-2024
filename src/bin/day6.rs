@@ -42,7 +42,7 @@ fn states_to_positions(states: &HashSet<(Coord2D, Direction2D)>) -> HashSet<Coor
 
 fn travel(init: &BoundedCoord2D, obstacles: &Obstacles) -> HashSet<Coord2D> {
     let mut visited: HashSet<(Coord2D, Direction2D)> = HashSet::new();
-    let mut cur_pos = init.clone();
+    let mut cur_pos = *init;
     let mut cur_dir = Direction2D::Up;
 
     visited.insert((cur_pos.unbounded(), cur_dir));
@@ -65,7 +65,7 @@ fn travel(init: &BoundedCoord2D, obstacles: &Obstacles) -> HashSet<Coord2D> {
 }
 
 fn travel_loops(init: &BoundedCoord2D, obstacles: &Obstacles) -> bool {
-    let mut cur_pos = init.clone();
+    let mut cur_pos = *init;
     let mut cur_dir = Direction2D::Up;
     let mut turns = Vec::new();
 

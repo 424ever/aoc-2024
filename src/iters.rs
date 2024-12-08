@@ -18,7 +18,7 @@ pub trait IteratorExtensions: Iterator {
     where
         P: Fn(&Self::Item) -> bool;
 
-    fn with_known_size(self) -> impl Iterator<Item = Self::Item> + ExactSizeIterator;
+    fn with_known_size(self) -> impl ExactSizeIterator<Item = Self::Item>;
 
     fn middle_element(self) -> Option<Self::Item>
     where
@@ -63,7 +63,7 @@ where
         }
     }
 
-    fn with_known_size(self) -> impl Iterator<Item = Self::Item> + ExactSizeIterator {
+    fn with_known_size(self) -> impl ExactSizeIterator<Item = Self::Item> {
         self.collect::<Vec<_>>().into_iter()
     }
 }

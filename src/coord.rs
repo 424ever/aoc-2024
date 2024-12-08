@@ -146,7 +146,7 @@ impl BoundedCoord2D {
     }
 
     pub fn unbounded(&self) -> Coord2D {
-        self.coord.clone()
+        self.coord
     }
 
     pub fn bounds(&self) -> Bounds2D {

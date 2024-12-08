@@ -19,16 +19,14 @@ fn main() {
 fn antinodes(antennas: &HashMap<Frequency, Antennas>) -> HashSet<Coord2D> {
     antennas
         .iter()
-        .map(|(_, ant)| antinodes_of(ant))
-        .flatten()
+        .flat_map(|(_, ant)| antinodes_of(ant))
         .collect()
 }
 
 fn antinodes_with_resonance(antennas: &HashMap<Frequency, Antennas>) -> HashSet<Coord2D> {
     antennas
         .iter()
-        .map(|(_, ant)| antinodes_with_resonance_of(ant))
-        .flatten()
+        .flat_map(|(_, ant)| antinodes_with_resonance_of(ant))
         .collect()
 }
 
@@ -68,8 +66,7 @@ fn antinodes_of(antennas: &Antennas) -> HashSet<Coord2D> {
 fn antinodes_with_resonance_of(antennas: &Antennas) -> HashSet<Coord2D> {
     iproduct!(antennas.iter(), antennas.iter())
         .filter(|(a, b)| a != b)
-        .map(|(&a, &b)| (1..).map_while(move |n| a + ((b - a) * n)))
-        .flatten()
+        .flat_map(|(&a, &b)| (1..).map_while(move |n| a + ((b - a) * n)))
         .map(|b| b.unbounded())
         .collect()
 }
