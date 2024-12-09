@@ -24,7 +24,7 @@ fn main() {
     println!("Part 2: {}", add_up_corrected(&updates, &rules));
 }
 
-fn add_up_correctly_odered(updates: &Vec<Update>, rules: &PageOrderingRules) -> u32 {
+fn add_up_correctly_odered(updates: &[Update], rules: &PageOrderingRules) -> u32 {
     updates
         .iter()
         .filter(|u| ordered_by_rules(u, rules))
@@ -32,7 +32,7 @@ fn add_up_correctly_odered(updates: &Vec<Update>, rules: &PageOrderingRules) -> 
         .sum()
 }
 
-fn add_up_corrected(updates: &Vec<Update>, rules: &PageOrderingRules) -> u32 {
+fn add_up_corrected(updates: &[Update], rules: &PageOrderingRules) -> u32 {
     updates
         .iter()
         .filter(|u| !ordered_by_rules(u, rules))

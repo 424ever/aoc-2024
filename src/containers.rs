@@ -29,9 +29,7 @@ impl<T> Vec2D<T> {
     }
 
     pub fn get(&self, line: usize, column: usize) -> Option<&T> {
-        if line >= self.lines() {
-            None
-        } else if column >= self.cols() {
+        if line >= self.lines() || column >= self.cols() {
             None
         } else {
             self.data.get(self.index(line, column))

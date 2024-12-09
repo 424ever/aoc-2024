@@ -30,7 +30,7 @@ fn main() {
     println!("Part 2: {}", total_calibration_result(&cals, true));
 }
 
-fn total_calibration_result(cals: &Vec<Calibration>, concat: bool) -> u64 {
+fn total_calibration_result(cals: &[Calibration], concat: bool) -> u64 {
     let mut available_operators = HashSet::new();
     available_operators.insert(Operator::Add);
     available_operators.insert(Operator::Multiply);

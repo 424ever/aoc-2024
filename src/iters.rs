@@ -51,7 +51,7 @@ where
         Some(self.enumerate().find(|(_, e)| predicate(e))?.0)
     }
 
-    fn middle_element(self) -> Option<Self::Item>
+    fn middle_element(mut self) -> Option<Self::Item>
     where
         Self: ExactSizeIterator,
     {
@@ -59,7 +59,7 @@ where
             None
         } else {
             let s = self.len() / 2;
-            self.skip(s).next()
+            self.nth(s)
         }
     }
 

@@ -46,18 +46,14 @@ fn travel(init: &BoundedCoord2D, obstacles: &Obstacles) -> HashSet<Coord2D> {
     let mut cur_dir = Direction2D::Up;
 
     visited.insert((cur_pos.unbounded(), cur_dir));
-    loop {
-        if let Some(new_pos) = cur_pos.go_in(&cur_dir) {
-            if obstacles.contains(&new_pos.unbounded()) {
-                cur_dir = cur_dir.turn_right();
-            } else {
-                cur_pos = new_pos;
-                if !visited.insert((cur_pos.unbounded(), cur_dir)) {
-                    panic!("travel() looped");
-                }
-            }
+    while let Some(new_pos) = cur_pos.go_in(&cur_dir) {
+        if obstacles.contains(&new_pos.unbounded()) {
+            cur_dir = cur_dir.turn_right();
         } else {
-            break;
+            cur_pos = new_pos;
+            if !visited.insert((cur_pos.unbounded(), cur_dir)) {
+                panic!("travel() looped");
+            }
         }
     }
 
@@ -69,22 +65,18 @@ fn travel_loops(init: &BoundedCoord2D, obstacles: &Obstacles) -> bool {
     let mut cur_dir = Direction2D::Up;
     let mut turns = Vec::new();
 
-    loop {
-        if let Some(new_pos) = cur_pos.go_in(&cur_dir) {
-            if obstacles.contains(&new_pos.unbounded()) {
-                cur_dir = cur_dir.turn_right();
-                if turns.contains(&(cur_pos, cur_dir)) {
-                    return true;
-                }
-                turns.push((cur_pos, cur_dir));
-            } else {
-                cur_pos = new_pos;
-            }
-            if cur_pos == *init && cur_dir == Direction2D::Up {
+    while let Some(new_pos) = cur_pos.go_in(&cur_dir) {
+        if obstacles.contains(&new_pos.unbounded()) {
+            cur_dir = cur_dir.turn_right();
+            if turns.contains(&(cur_pos, cur_dir)) {
                 return true;
             }
+            turns.push((cur_pos, cur_dir));
         } else {
-            break;
+            cur_pos = new_pos;
+        }
+        if cur_pos == *init && cur_dir == Direction2D::Up {
+            return true;
         }
     }
     false
