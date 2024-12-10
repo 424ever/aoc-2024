@@ -10,7 +10,8 @@ type Height = u8;
 fn main() {
     let input = read_input("day10");
     let map = parse_input(&input);
-    println!("Part 1: {}", sum_up_trailheads(&map));
+    println!("Part 1: {}", sum_up_trailheads(&map, trailhead_score));
+    println!("Part 2: {}", sum_up_trailheads(&map, trailhead_rating));
 }
 
 fn parse_input(input: &str) -> Vec2D<Height> {
@@ -21,12 +22,15 @@ fn parse_input(input: &str) -> Vec2D<Height> {
     )
 }
 
-fn sum_up_trailheads(map: &Vec2D<Height>) -> u64 {
+fn sum_up_trailheads<F>(map: &Vec2D<Height>, eval: F) -> u64
+where
+    F: Fn(&Vec2D<Height>, (Vec2DIndex, Height)) -> u64,
+{
     let mut sum = 0;
 
     for (pos, &height) in map.enumerated_iter() {
         if height == 0 {
-            sum += trailhead_score(map, (pos, height));
+            sum += eval(map, (pos, height));
         }
     }
 
@@ -57,14 +61,38 @@ fn trailhead_score(map: &Vec2D<Height>, init: (Vec2DIndex, Height)) -> u64 {
     ends.len() as u64
 }
 
+fn trailhead_rating(map: &Vec2D<Height>, init: (Vec2DIndex, Height)) -> u64 {
+    let mut worklist = vec![init];
+    let mut rating = 0;
+
+    while let Some((pos, cur)) = maybe_remove_first(&mut worklist) {
+        if cur == 9 {
+            rating += 1;
+            continue;
+        }
+
+        [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            .iter()
+            .filter_map(|(l, c)| pos.checked_add_signed(*l, *c))
+            .filter_map(|i| Some((i, map.get_index(&i)?)))
+            .filter(|(_, new)| **new == cur + 1)
+            .for_each(|(i, new)| {
+                let newtup = (i, *new);
+                worklist.push(newtup);
+            });
+    }
+
+    rating
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{parse_input, sum_up_trailheads};
+    use crate::{parse_input, sum_up_trailheads, trailhead_rating, trailhead_score};
 
     #[test]
     fn test_part_1_1() {
         let input = concat!("0123\n", "1234\n", "8765\n", "9876\n",);
-        assert_eq!(sum_up_trailheads(&parse_input(input)), 1);
+        assert_eq!(sum_up_trailheads(&parse_input(input), trailhead_score), 1);
     }
 
     #[test]
@@ -79,6 +107,21 @@ mod tests {
             "01329801\n",
             "10456732\n",
         );
-        assert_eq!(sum_up_trailheads(&parse_input(input)), 36);
+        assert_eq!(sum_up_trailheads(&parse_input(input), trailhead_score), 36);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let input = concat!(
+            "89010123\n",
+            "78121874\n",
+            "87430965\n",
+            "96549874\n",
+            "45678903\n",
+            "32019012\n",
+            "01329801\n",
+            "10456732\n",
+        );
+        assert_eq!(sum_up_trailheads(&parse_input(input), trailhead_rating), 81);
     }
 }
