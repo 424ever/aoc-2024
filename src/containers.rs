@@ -1,6 +1,22 @@
+use itertools::Itertools;
+
 pub struct Vec2D<T> {
     cols: usize,
     data: Vec<T>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct Vec2DIndex {
+    line: usize,
+    column: usize,
+}
+
+pub fn maybe_remove_first<T>(vec: &mut Vec<T>) -> Option<T> {
+    if vec.is_empty() {
+        None
+    } else {
+        Some(vec.swap_remove(0))
+    }
 }
 
 impl<T> Vec2D<T> {
@@ -36,6 +52,10 @@ impl<T> Vec2D<T> {
         }
     }
 
+    pub fn get_index(&self, index: &Vec2DIndex) -> Option<&T> {
+        self.get(index.line, index.column)
+    }
+
     pub fn cols(&self) -> usize {
         self.cols
     }
@@ -44,7 +64,26 @@ impl<T> Vec2D<T> {
         self.data.len() / self.cols()
     }
 
+    pub fn enumerated_iter(&self) -> impl Iterator<Item = (Vec2DIndex, &T)> {
+        (0..self.lines())
+            .cartesian_product(0..self.cols())
+            .map(|(l, c)| (Vec2DIndex::new(l, c), self.get(l, c).unwrap()))
+    }
+
     fn index(&self, l: usize, c: usize) -> usize {
         l * self.cols() + c
+    }
+}
+
+impl Vec2DIndex {
+    pub fn new(line: usize, column: usize) -> Self {
+        Self { line, column }
+    }
+
+    pub fn checked_add_signed(&self, lines: isize, columns: isize) -> Option<Self> {
+        Some(Self::new(
+            self.line.checked_add_signed(lines)?,
+            self.column.checked_add_signed(columns)?,
+        ))
     }
 }
