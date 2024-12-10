@@ -2,10 +2,10 @@ use std::ops::{Add, Mul, Sub};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Direction2D {
-    Up,
-    Down,
-    Left,
-    Right,
+    North,
+    South,
+    West,
+    East,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -35,10 +35,10 @@ pub struct BoundedCoord2D {
 impl Direction2D {
     pub fn turn_right(&self) -> Direction2D {
         match self {
-            Self::Down => Self::Left,
-            Self::Left => Self::Up,
-            Self::Up => Self::Right,
-            Self::Right => Self::Down,
+            Self::South => Self::West,
+            Self::West => Self::North,
+            Self::North => Self::East,
+            Self::East => Self::South,
         }
     }
 }
@@ -84,19 +84,19 @@ impl Coord2D {
 
     pub fn go_in(&self, dir: &Direction2D) -> Option<Coord2D> {
         Some(match dir {
-            Direction2D::Up => Self {
+            Direction2D::North => Self {
                 x: self.x,
                 y: self.y.checked_sub(1)?,
             },
-            Direction2D::Down => Self {
+            Direction2D::South => Self {
                 x: self.x,
                 y: self.y + 1,
             },
-            Direction2D::Left => Self {
+            Direction2D::West => Self {
                 x: self.x.checked_sub(1)?,
                 y: self.y,
             },
-            Direction2D::Right => Self {
+            Direction2D::East => Self {
                 x: self.x + 1,
                 y: self.y,
             },
