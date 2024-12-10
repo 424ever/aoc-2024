@@ -10,8 +10,8 @@ type Height = u8;
 fn main() {
     let input = read_input("day10");
     let map = parse_input(&input);
-    println!("Part 1: {}", sum_up_trailheads(&map, trailhead_score));
-    println!("Part 2: {}", sum_up_trailheads(&map, trailhead_rating));
+    println!("Part 1: {}", sum_trailhead_scores(&map));
+    println!("Part 2: {}", sum_trailhead_ratings(&map));
 }
 
 fn parse_input(input: &str) -> Vec2D<Height> {
@@ -22,77 +22,82 @@ fn parse_input(input: &str) -> Vec2D<Height> {
     )
 }
 
-fn sum_up_trailheads<F>(map: &Vec2D<Height>, eval: F) -> u64
+fn sum_trailhead_scores(map: &Vec2D<Height>) -> u64 {
+    sum_trailhead_evals(
+        map,
+        HashSet::new,
+        |mut s, (p, _)| {
+            s.insert(p);
+            s
+        },
+        |s| s.len() as u64,
+    )
+}
+
+fn sum_trailhead_ratings(map: &Vec2D<Height>) -> u64 {
+    sum_trailhead_evals(map, || 0, |r, _| r + 1, |r| r)
+}
+
+fn sum_trailhead_evals<I, F, R, G>(map: &Vec2D<Height>, init: I, fold: F, finalize: G) -> u64
 where
-    F: Fn(&Vec2D<Height>, (Vec2DIndex, Height)) -> u64,
+    I: Fn() -> R,
+    F: Fn(R, (Vec2DIndex, Height)) -> R,
+    G: Fn(R) -> u64,
 {
-    let mut sum = 0;
-
-    for (pos, &height) in map.enumerated_iter() {
-        if height == 0 {
-            sum += eval(map, (pos, height));
-        }
-    }
-
-    sum
+    map.enumerated_iter()
+        .filter(|(_, &height)| height == 0)
+        .map(|(p, h)| eval_trailhead(map, (p, *h), &init, &fold, &finalize))
+        .sum()
 }
 
-fn trailhead_score(map: &Vec2D<Height>, init: (Vec2DIndex, Height)) -> u64 {
-    let mut worklist = vec![init];
-    let mut ends = HashSet::new();
+fn eval_trailhead<I, F, G, R>(
+    map: &Vec2D<Height>,
+    trailhead: (Vec2DIndex, Height),
+    init: I,
+    fold: F,
+    finalize: G,
+) -> u64
+where
+    I: Fn() -> R,
+    F: Fn(R, (Vec2DIndex, Height)) -> R,
+    G: Fn(R) -> u64,
+{
+    let mut worklist = vec![trailhead];
+    let mut acc = init();
 
     while let Some((pos, cur)) = maybe_remove_first(&mut worklist) {
         if cur == 9 {
-            ends.insert(pos);
+            acc = fold(acc, (pos, cur));
             continue;
         }
 
-        [(-1, 0), (1, 0), (0, -1), (0, 1)]
-            .iter()
-            .filter_map(|(l, c)| pos.checked_add_signed(*l, *c))
-            .filter_map(|i| Some((i, map.get_index(&i)?)))
-            .filter(|(_, new)| **new == cur + 1)
-            .for_each(|(i, new)| {
-                let newtup = (i, *new);
-                worklist.push(newtup);
-            });
+        [
+            (-1, 0), /* north */
+            (1, 0),  /* south */
+            (0, -1), /* west */
+            (0, 1),  /* east */
+        ]
+        .iter()
+        .filter_map(|(l, c)| pos.checked_add_signed(*l, *c))
+        .filter_map(|i| Some((i, map.get_index(&i)?)))
+        .filter(|(_, new)| **new == cur + 1)
+        .for_each(|(i, new)| {
+            let newtup = (i, *new);
+            worklist.push(newtup);
+        });
     }
 
-    ends.len() as u64
-}
-
-fn trailhead_rating(map: &Vec2D<Height>, init: (Vec2DIndex, Height)) -> u64 {
-    let mut worklist = vec![init];
-    let mut rating = 0;
-
-    while let Some((pos, cur)) = maybe_remove_first(&mut worklist) {
-        if cur == 9 {
-            rating += 1;
-            continue;
-        }
-
-        [(-1, 0), (1, 0), (0, -1), (0, 1)]
-            .iter()
-            .filter_map(|(l, c)| pos.checked_add_signed(*l, *c))
-            .filter_map(|i| Some((i, map.get_index(&i)?)))
-            .filter(|(_, new)| **new == cur + 1)
-            .for_each(|(i, new)| {
-                let newtup = (i, *new);
-                worklist.push(newtup);
-            });
-    }
-
-    rating
+    finalize(acc)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{parse_input, sum_up_trailheads, trailhead_rating, trailhead_score};
+    use crate::{parse_input, sum_trailhead_ratings, sum_trailhead_scores};
 
     #[test]
     fn test_part_1_1() {
         let input = concat!("0123\n", "1234\n", "8765\n", "9876\n",);
-        assert_eq!(sum_up_trailheads(&parse_input(input), trailhead_score), 1);
+        assert_eq!(sum_trailhead_scores(&parse_input(input)), 1);
     }
 
     #[test]
@@ -107,7 +112,7 @@ mod tests {
             "01329801\n",
             "10456732\n",
         );
-        assert_eq!(sum_up_trailheads(&parse_input(input), trailhead_score), 36);
+        assert_eq!(sum_trailhead_scores(&parse_input(input)), 36);
     }
 
     #[test]
@@ -122,6 +127,6 @@ mod tests {
             "01329801\n",
             "10456732\n",
         );
-        assert_eq!(sum_up_trailheads(&parse_input(input), trailhead_rating), 81);
+        assert_eq!(sum_trailhead_ratings(&parse_input(input)), 81);
     }
 }
