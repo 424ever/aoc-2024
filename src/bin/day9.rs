@@ -24,8 +24,7 @@ fn main() {
         compressed_checksum(
             &fragged
                 .iter()
-                .map(|p| p.into_iter())
-                .flatten()
+                .flat_map(|p| p.into_iter())
                 .collect::<Vec<_>>()
         )
     );
@@ -191,8 +190,7 @@ mod tests {
             compressed_checksum(
                 &fragged
                     .iter()
-                    .map(|p| p.into_iter())
-                    .flatten()
+                    .flat_map(|p| p.into_iter())
                     .collect::<Vec<_>>()
             ),
             1928
