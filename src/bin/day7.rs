@@ -1,6 +1,6 @@
 use std::{collections::HashSet, iter::repeat_n};
 
-use aoc_2024::read_input;
+use aoc_2024::{read_input, util::concat_numbers};
 use itertools::Itertools;
 use nom::{
     bytes::complete::tag,
@@ -58,18 +58,11 @@ fn parse_input(input: &str) -> IResult<&str, Vec<Calibration>> {
 }
 
 impl Operator {
-    fn apply(&self, mut a: u64, b: u64) -> u64 {
+    fn apply(&self, a: u64, b: u64) -> u64 {
         match self {
             Operator::Add => a + b,
             Operator::Multiply => a * b,
-            Operator::Concat => {
-                let mut t = b;
-                while t > 0 {
-                    t /= 10;
-                    a *= 10;
-                }
-                a + b
-            }
+            Operator::Concat => concat_numbers::<10>(a, b),
         }
     }
 }
