@@ -19,16 +19,10 @@ pub fn count_digits<const R: u64>(n: u64) -> usize {
     c
 }
 
-pub fn split_digits<const R: u64>(mut n: u64, from_right: usize) -> (u64, u64) {
-    let mut b = 0;
+pub fn split_digits<const R: u64>(n: u64, from_right: usize) -> (u64, u64) {
+    let div = R.pow(from_right.try_into().unwrap());
 
-    for i in 0..from_right {
-        assert!(n != 0);
-        b += (n % R) * R.pow((i) as u32);
-        n /= R;
-    }
-
-    (n, b)
+    (n / div, n % div)
 }
 
 #[cfg(test)]
