@@ -65,9 +65,13 @@ impl<T> Vec2D<T> {
     }
 
     pub fn enumerated_iter(&self) -> impl Iterator<Item = (Vec2DIndex, &T)> {
+        self.indizes().map(|i| (i, self.get_index(&i).unwrap()))
+    }
+
+    pub fn indizes(&self) -> impl Iterator<Item = Vec2DIndex> {
         (0..self.lines())
             .cartesian_product(0..self.cols())
-            .map(|(l, c)| (Vec2DIndex::new(l, c), self.get(l, c).unwrap()))
+            .map(|(l, c)| Vec2DIndex::new(l, c))
     }
 
     fn index(&self, l: usize, c: usize) -> usize {
