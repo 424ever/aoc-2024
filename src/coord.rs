@@ -22,8 +22,8 @@ pub struct Coord2D {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct CoordDiff2D {
-    dx: i32,
-    dy: i32,
+    pub dx: i32,
+    pub dy: i32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -40,6 +40,21 @@ impl Direction2D {
             Self::North => Self::East,
             Self::East => Self::South,
         }
+    }
+
+    pub fn to_offset(&self) -> CoordDiff2D {
+        match self {
+            Direction2D::North => CoordDiff2D { dx: 0, dy: -1 },
+            Direction2D::South => CoordDiff2D { dx: 0, dy: 1 },
+            Direction2D::West => CoordDiff2D { dx: -1, dy: 0 },
+            Direction2D::East => CoordDiff2D { dx: 1, dy: 0 },
+        }
+    }
+
+    pub fn all() -> impl Iterator<Item = Self> {
+        [Self::North, Self::South, Self::East, Self::West]
+            .iter()
+            .cloned()
     }
 }
 
@@ -83,24 +98,7 @@ impl Coord2D {
     }
 
     pub fn go_in(&self, dir: &Direction2D) -> Option<Coord2D> {
-        Some(match dir {
-            Direction2D::North => Self {
-                x: self.x,
-                y: self.y.checked_sub(1)?,
-            },
-            Direction2D::South => Self {
-                x: self.x,
-                y: self.y + 1,
-            },
-            Direction2D::West => Self {
-                x: self.x.checked_sub(1)?,
-                y: self.y,
-            },
-            Direction2D::East => Self {
-                x: self.x + 1,
-                y: self.y,
-            },
-        })
+        *self + dir.to_offset()
     }
 }
 
