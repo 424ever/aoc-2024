@@ -1,7 +1,7 @@
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 
 use aoc_2024::{
-    containers::{maybe_remove_first, Vec2D, Vec2DIndex},
+    containers::{Vec2D, Vec2DIndex},
     read_input,
 };
 
@@ -62,10 +62,12 @@ where
     F: Fn(R, (Vec2DIndex, Height)) -> R,
     G: Fn(R) -> u64,
 {
-    let mut worklist = vec![trailhead];
+    let mut worklist = VecDeque::new();
     let mut acc = init();
 
-    while let Some((pos, cur)) = maybe_remove_first(&mut worklist) {
+    worklist.push_back(trailhead);
+
+    while let Some((pos, cur)) = worklist.pop_front() {
         if cur == 9 {
             acc = fold(acc, (pos, cur));
             continue;
@@ -83,7 +85,7 @@ where
         .filter(|(_, new)| **new == cur + 1)
         .for_each(|(i, new)| {
             let newtup = (i, *new);
-            worklist.push(newtup);
+            worklist.push_back(newtup);
         });
     }
 

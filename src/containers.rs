@@ -11,14 +11,6 @@ pub struct Vec2DIndex {
     column: usize,
 }
 
-pub fn maybe_remove_first<T>(vec: &mut Vec<T>) -> Option<T> {
-    if vec.is_empty() {
-        None
-    } else {
-        Some(vec.swap_remove(0))
-    }
-}
-
 impl<T> Vec2D<T> {
     pub fn from_lines<I>(lines: I) -> Self
     where
